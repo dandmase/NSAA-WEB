@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 const app = express();
 const port = 3000;
@@ -55,9 +56,17 @@ passport.use('jwtCookie', new JwtStrategy({
   }
 ));
 
-app.get('/', (req, res) => {
-  res.send('Welcome to your private page, user!');
-});
+app.get('/welcome', passport.authenticate('jwtCookie', { session: false, failureRedirect: '/login' }),
+  (req, res) => {
+    res.sendFile(path.join(__dirname, 'welcome.html')); // Asegúrate de que welcome.html esté en el directorio correcto
+  }
+);
+
+app.get('/login',
+  (req, res) => {
+    res.sendFile('login.html', { root: __dirname })
+  }
+)
 
 app.post('/login', 
   passport.authenticate('username-password', { failureRedirect: '/login', session: false }),
@@ -72,12 +81,17 @@ app.post('/login',
 
     const token = jwt.sign(jwtClaims, jwtSecret);
     res.cookie('jwt', token, { httpOnly: true, secure: true });
-    res.redirect('/');
+    res.redirect('/welcome'); // Redirecciona a la ruta '/welcome'
     
     console.log(`Token enviado. Debug en https://jwt.io/?value=${token}`);
     console.log(`Secreto del token (para verificar la firma): ${jwtSecret}`);
   }
 );
+
+app.get('/logout', (req, res) => {
+  res.clearCookie('jwt'); // Elimina la cookie jwt
+  res.redirect('/login'); // Redirige al usuario a la página de login
+});
 
 app.get('/',
   passport.authenticate('jwtCookie', { session: false, failureRedirect: '/login' }),
