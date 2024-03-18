@@ -27,8 +27,17 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre('save', function(next) {
   if (!this.isModified('password')) return next();
   const salt = crypto.randomBytes(16).toString('hex');
-  crypto.scrypt(this.password, salt, 64, (err, derivedKey) => {
-    if (err) throw err;
+
+  // Slightly higher configuration
+  // N = 32768 (2^15), r = 8, p = 1
+  // This is a compromise between security and performance
+  // and is more likely to be supported on various systems without causing errors.
+  crypto.scrypt(this.password, salt, 64, { N: 16384, r: 8, p: 1 }, (err, derivedKey) => {
+    if (err) {
+      console.error("Error hashing password with scrypt:", err);
+      // Proper error handling
+      return next(err);
+    }
     this.password = `${derivedKey.toString('hex')}:${salt}`;
     next();
   });
@@ -123,6 +132,7 @@ app.post('/register', async (req, res) => {
     await user.save();
     res.status(201).send('<p>User registered successfully. <a href="/login">Log in</a></p>');
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).send('Error registering user');
   }
 });
@@ -144,6 +154,7 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`App listening at http://localhost:${port}`);
 });
+
 
 
 
