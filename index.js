@@ -15,7 +15,7 @@ const app = express();
 const port = 3000;
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/yourDB', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect('mongodb://localhost:27017/yourDB')
   .then(() => console.log('Connection to MongoDB successful'))
   .catch((err) => console.error('Error connecting to MongoDB', err));
 
@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema({
 
 // Custom scrypt parameters
 const scryptParams = {
-  N: 1048576, // Customize N here
+  N: 2097152, // Customize N here
   r: 8,
   p: 1
 };
