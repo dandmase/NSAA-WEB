@@ -7,14 +7,15 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
-const crypto = require('crypto'); // Use Node.js's crypto module
+const crypto = require('crypto');
 const path = require('path');
+const scryptPbkdf = require('scrypt-pbkdf');
 
 const app = express();
 const port = 3000;
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/aa', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect('mongodb://localhost:27017/yourDB', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connection to MongoDB successful'))
   .catch((err) => console.error('Error connecting to MongoDB', err));
 
@@ -24,32 +25,42 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true }
 });
 
-UserSchema.pre('save', function(next) {
-  if (!this.isModified('password')) return next();
-  const salt = crypto.randomBytes(16).toString('hex');
+// Custom scrypt parameters
+const scryptParams = {
+  N: 1048576, // Customize N here
+  r: 8,
+  p: 1
+};
 
-  // Slightly higher configuration
-  // N = 32768 (2^15), r = 8, p = 1
-  // This is a compromise between security and performance
-  // and is more likely to be supported on various systems without causing errors.
-  crypto.scrypt(this.password, salt, 64, { N: 16384, r: 8, p: 1 }, (err, derivedKey) => {
-    if (err) {
-      console.error("Error hashing password with scrypt:", err);
-      // Proper error handling
-      return next(err);
-    }
-    this.password = `${derivedKey.toString('hex')}:${salt}`;
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+
+  try {
+    const salt = scryptPbkdf.salt(16); // Generates a 16-byte salt
+    const derivedKeyLength = 64; // Length of the derived key in bytes
+
+    // Hashing the password with scrypt
+    const key = await scryptPbkdf.scrypt(this.password, salt, derivedKeyLength, scryptParams);
+    this.password = Buffer.from(key).toString('hex') + ':' + Buffer.from(salt).toString('hex');
     next();
-  });
+  } catch (err) {
+    console.error("Error hashing password:", err);
+    next(err);
+  }
 });
 
 UserSchema.methods.comparePassword = function(candidatePassword) {
-  return new Promise((resolve, reject) => {
-    const [hash, salt] = this.password.split(':');
-    crypto.scrypt(candidatePassword, salt, 64, (err, derivedKey) => {
-      if (err) reject(err);
-      resolve(hash === derivedKey.toString('hex'));
-    });
+  return new Promise(async (resolve, reject) => {
+    const [hash, saltHex] = this.password.split(':');
+    const salt = Buffer.from(saltHex, 'hex');
+
+    try {
+      const derivedKeyLength = 64; // Same length as when hashing
+      const key = await scryptPbkdf.scrypt(candidatePassword, salt, derivedKeyLength, scryptParams);
+      resolve(hash === Buffer.from(key).toString('hex'));
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
@@ -154,6 +165,7 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`App listening at http://localhost:${port}`);
 });
+
 
 
 
