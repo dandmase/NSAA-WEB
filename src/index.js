@@ -27,7 +27,8 @@ const UserSchema = new mongoose.Schema({
 
 // Custom scrypt parameters
 const scryptParams = {
-  N: 1048576, // Customize N here
+  //N: 1048576, 
+  N:16384,
   r: 8,
   p: 1
 };
@@ -157,9 +158,13 @@ app.get('/welcome', passport.authenticate('jwt', { session: false, failureRedire
 });
 
 app.get('/logout', (req, res) => {
+  
+  const jwtCookie = req.cookies['jwt'];
+  console.log('Deleting JWT cookie:', jwtCookie); 
   res.clearCookie('jwt');
   res.redirect('/login');
 });
+
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
