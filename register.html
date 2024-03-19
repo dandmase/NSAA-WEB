@@ -1,21 +1,28 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Registro de Usuario</title>
+<title>User Registration</title>
 </head>
 <body>
-<h2>Registro de Usuario</h2>
+<h2>User Registration</h2>
 <form action="/register" method="POST">
   <div>
-    <label for="username">Nombre de usuario:</label>
+    <label for="username">Username:</label>
     <input type="text" id="username" name="username" required>
   </div>
   <div>
-    <label for="password">Contraseña:</label>
+    <label for="password">Password:</label>
     <input type="password" id="password" name="password" required>
   </div>
-  <button type="submit">Registrar</button>
+  <div>
+    <button type="submit">Register</button>
+    <!-- Button to go to the login page -->
+    <a href="/login" style="text-decoration: none; margin-left: 10px;">
+      <button type="button" style="cursor: pointer;">Log In</button>
+    </a>
+  </div>
 </form>
 </body>
 </html>
+

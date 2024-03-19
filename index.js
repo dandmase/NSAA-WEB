@@ -15,7 +15,7 @@ const app = express();
 const port = 3000;
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/yourDB')
+mongoose.connect('mongodb://localhost:27017/database')
   .then(() => console.log('Connection to MongoDB successful'))
   .catch((err) => console.error('Error connecting to MongoDB', err));
 
@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema({
 
 // Custom scrypt parameters
 const scryptParams = {
-  N: 2097152, // Customize N here
+  N: 1048576, // Customize N here
   r: 8,
   p: 1
 };
@@ -124,6 +124,10 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/login', s
   const token = jwt.sign(jwtClaims, jwtSecret);
   res.cookie('jwt', token, { httpOnly: true, secure: true });
   res.redirect('/welcome');
+  
+  console.log(`Token sent. Debug at https://jwt.io/?value=${token}`)
+  console.log(`Token secret (for verifying the signature): ${jwtSecret.toString('base64')}`)
+  
 });
 
 app.get('/register', (req, res) => {
