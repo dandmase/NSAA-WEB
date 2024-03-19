@@ -110,7 +110,7 @@ passport.use(new JwtStrategy({
 
 // Routes
 app.get('/login', (req, res) => {
-  res.sendFile('login.html', { root: __dirname });
+  res.sendFile('/views/login.html', { root: __dirname });
 });
 
 app.post('/login', passport.authenticate('local', { failureRedirect: '/login', session: false }), (req, res) => {
@@ -131,7 +131,7 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/login', s
 });
 
 app.get('/register', (req, res) => {
-  res.sendFile('register.html', { root: __dirname });
+  res.sendFile('/views/register.html', { root: __dirname });
 });
 
 app.post('/register', async (req, res) => {
@@ -153,7 +153,7 @@ app.post('/register', async (req, res) => {
 });
 
 app.get('/welcome', passport.authenticate('jwt', { session: false, failureRedirect: '/login' }), (req, res) => {
-  res.sendFile(path.join(__dirname, 'welcome.html'));
+  res.sendFile(path.join(__dirname, '/views/welcome.html'));
 });
 
 app.get('/logout', (req, res) => {
